@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include <SDL_image.h>
 
 using namespace std;
 
@@ -56,6 +57,15 @@ bool InitSDL() {
   if (renderer == nullptr) {
     cout << "Renderer could not be created! SDL_Error: " << SDL_GetError() << endl;
     return false;
+  }
+
+  // Initialize bricks
+  if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+    cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << endl;
+  }
+  SDL_Texture* brickTexture = IMG_LoadTexture(renderer, "assets/brick.png");
+  if (!brickTexture) {
+    cerr << "Failed to load brick texture: " << IMG_GetError() << endl;
   }
 
   // Score font display 
@@ -121,6 +131,18 @@ void Draw(){
   SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
   SDL_Rect border = {0, 0, SCREEN_WIDTH, height * CELL_SIZE};
   SDL_RenderDrawRect(renderer, &border);
+
+  //Draw bricks
+  vector<SDL_Rect> walls = {
+      {100, 100, 20, 20},
+      {120, 100, 20, 20},
+      {140, 100, 20, 20}
+  };
+
+  // Render walls
+  for (const auto& wall : walls) {
+      SDL_RenderCopy(renderer, brickTexture, nullptr, &wall);
+  }
 
   // Draw snake head
   SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
@@ -228,6 +250,12 @@ void Logic(){
   for (int i = 0; i < nTail; i++){
     if (tailX[i] == x && tailY[i] == y)
       gameOver = true;
+  }
+
+  for (const auto& wall : walls) {
+    if (snakeHeadRect.x == wall.x && snakeHeadRect.y == wall.y) {
+        gameOver = true;
+    }
   }
 
   if (x == fruitX && y == fruitY){
