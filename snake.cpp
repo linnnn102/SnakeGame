@@ -13,7 +13,7 @@ bool gameOver;
 const int width = 20;
 const int height = 20;
 int x, y, fruitX, fruitY, score;
-int tailX[100], tailY[100];
+int tailX[1000], tailY[1000];
 int nTail;
 
 enum eDirection {STOP = 0, LEFT, RIGHT, UP, DOWN};
@@ -26,6 +26,13 @@ const int SCREEN_HEIGHT = height * CELL_SIZE + 50; // Extra space for score
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 TTF_Font* font = nullptr;
+SDL_Texture* brickTexture = nullptr;
+
+// Wall variables
+const int MAX_WALL_BLOCKS = 100;
+int wallX[MAX_WALL_BLOCKS];
+int wallY[MAX_WALL_BLOCKS];
+int wallCount = 0;
 
 bool InitSDL() {
 
@@ -59,13 +66,17 @@ bool InitSDL() {
     return false;
   }
 
-  // Initialize bricks
+  // Initialize SDL_image for loading PNG images
   if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-    cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << endl;
+    cout << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << endl;
+    return false;
   }
-  SDL_Texture* brickTexture = IMG_LoadTexture(renderer, "assets/brick.png");
+  
+  // Load brick texture
+  brickTexture = IMG_LoadTexture(renderer, "assets/NewBricks.png");
   if (!brickTexture) {
-    cerr << "Failed to load brick texture: " << IMG_GetError() << endl;
+    cout << "Failed to load brick texture: " << IMG_GetError() << endl;
+    return false;
   }
 
   // Score font display 
@@ -78,6 +89,11 @@ bool InitSDL() {
 }
 
 void CloseSDL() {
+  if (brickTexture != nullptr) {
+    SDL_DestroyTexture(brickTexture);
+    brickTexture = nullptr;
+  }
+  
   if (font != nullptr) {
     TTF_CloseFont(font);
     font = nullptr;
@@ -93,6 +109,7 @@ void CloseSDL() {
     window = nullptr;
   }
   
+  IMG_Quit();
   TTF_Quit();
   SDL_Quit();
 }
@@ -101,12 +118,21 @@ void Setup(){
   srand(time(0));
   gameOver = false;
   dir = STOP;
-  x = width / 2;
-  y = height / 2;
+  x = width / 3;  //set snake head at 1/3 of the screen width(next step: random position)
+  y = height / 3;
   fruitX = rand() % width;
   fruitY = rand() % height;
   score = 0;
   nTail = 0;
+  
+  // Create a vertical wall in the middle of the screen
+  wallCount = 0;
+  int middleX = width / 2;
+  for (int i = height / 4; i < height * 3 / 4; i++) {
+    wallX[wallCount] = middleX;
+    wallY[wallCount] = i;
+    wallCount++;
+  }
 }
 
 // Draw a filled circle at the given center point with the given radius
@@ -132,16 +158,10 @@ void Draw(){
   SDL_Rect border = {0, 0, SCREEN_WIDTH, height * CELL_SIZE};
   SDL_RenderDrawRect(renderer, &border);
 
-  //Draw bricks
-  vector<SDL_Rect> walls = {
-      {100, 100, 20, 20},
-      {120, 100, 20, 20},
-      {140, 100, 20, 20}
-  };
-
-  // Render walls
-  for (const auto& wall : walls) {
-      SDL_RenderCopy(renderer, brickTexture, nullptr, &wall);
+  // Draw brick walls
+  for (int i = 0; i < wallCount; i++) {
+    SDL_Rect wallRect = {wallX[i] * CELL_SIZE, wallY[i] * CELL_SIZE, CELL_SIZE, CELL_SIZE};
+    SDL_RenderCopy(renderer, brickTexture, nullptr, &wallRect);
   }
 
   // Draw snake head
@@ -156,7 +176,7 @@ void Draw(){
     SDL_RenderFillRect(renderer, &tail);
   }
 
-  // Draw fruit -- as a red circle, positioned from upper-left corner
+  // Draw fruit -- as a red circle, positioned randomly in the screen (next step:except the walls and the snake head)
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   int fruitCenterX = fruitX * CELL_SIZE + CELL_SIZE / 2;
   int fruitCenterY = fruitY * CELL_SIZE + CELL_SIZE / 2;
@@ -247,25 +267,45 @@ void Logic(){
 
   if (x >= width || x < 0 || y >= height || y < 0)
     gameOver = true;
+  
+  // Check collision with snake tail
   for (int i = 0; i < nTail; i++){
     if (tailX[i] == x && tailY[i] == y)
       gameOver = true;
   }
-
-  for (const auto& wall : walls) {
-    if (snakeHeadRect.x == wall.x && snakeHeadRect.y == wall.y) {
-        gameOver = true;
+  
+  // Check collision with walls
+  for (int i = 0; i < wallCount; i++) {
+    if (x == wallX[i] && y == wallY[i]) {
+      gameOver = true;
+      break;
     }
   }
 
   if (x == fruitX && y == fruitY){
     score += 10;
     
-    // Generate new fruit position (avoid current position)
-    do {
+    // Generate new fruit position (avoid current position and walls)
+    bool validPosition = false;
+    while (!validPosition) {
       fruitX = rand() % width;
       fruitY = rand() % height;
-    } while (fruitX == x && fruitY == y); // Repeat if fruit spawns on snake head
+      validPosition = true;
+      
+      // Check if fruit spawns on snake head
+      if (fruitX == x && fruitY == y) {
+        validPosition = false;
+        continue;
+      }
+      
+      // Check if fruit spawns on wall
+      for (int i = 0; i < wallCount; i++) {
+        if (fruitX == wallX[i] && fruitY == wallY[i]) {
+          validPosition = false;
+          break;
+        }
+      }
+    }
     
     nTail++;
   }
