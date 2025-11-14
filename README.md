@@ -2,42 +2,60 @@
 
 A classic Snake game with a graphical window interface using SDL2.
 
-## Prerequisites
+## Quick Start
 
-### macOS
-Install SDL2 and SDL2_ttf using Homebrew:
+### 1. Check Dependencies
+First, check if all required libraries are installed:
 ```bash
-brew install sdl2 sdl2_ttf
+make check
 ```
 
-### Linux (Ubuntu/Debian)
+### 2. Install Missing Libraries (macOS)
+If any libraries are missing, install them with Homebrew:
 ```bash
-sudo apt-get install libsdl2-dev libsdl2-ttf-dev
+brew install sdl2 sdl2_ttf sdl2_image
+```
+
+<!-- ### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev
 ```
 
 ### Linux (Fedora/RHEL)
 ```bash
-sudo dnf install SDL2-devel SDL2_ttf-devel
+sudo dnf install SDL2-devel SDL2_ttf-devel SDL2_image-devel
+``` -->
+
+## Building and Running
+
+### Build the Game
+```bash
+make snake
 ```
 
-## Building
-
-Navigate to the cpp directory and run:
+Or simply:
 ```bash
-cd SnakeGame/cpp
 make
 ```
 
-This will create an executable named `snake`.
-
-## Running the Game
-
-Simply run:
+### Run the Game
 ```bash
 ./snake
 ```
 
 A window will pop up with the Snake game!
+
+### Clean Build Files
+```bash
+make clean
+```
+
+## Makefile Commands
+
+- **`make check`** - Checks if all required libraries are installed
+- **`make snake`** - Builds the snake game executable
+- **`make`** or **`make all`** - Same as `make snake` (default target)
+- **`make clean`** - Removes the compiled executable
 
 ## Controls
 
@@ -56,7 +74,6 @@ A window will pop up with the Snake game!
 - Each fruit increases your score by 10 points
 - The snake grows longer with each fruit eaten
 - Don't hit the walls or your own tail!
-- Game Over message will show your final score
 
 ## Cleaning Up
 

@@ -4,6 +4,9 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include <SDL_image.h>
+
+#include "generators.h"
 
 using namespace std;
 
@@ -12,7 +15,7 @@ bool gameOver;
 const int width = 20;
 const int height = 20;
 int x, y, fruitX, fruitY, score;
-int tailX[100], tailY[100];
+int tailX[1000], tailY[1000];
 int nTail;
 
 enum eDirection {STOP = 0, LEFT, RIGHT, UP, DOWN};
@@ -25,6 +28,14 @@ const int SCREEN_HEIGHT = height * CELL_SIZE + 50; // Extra space for score
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 TTF_Font* font = nullptr;
+SDL_Texture* brickTexture = nullptr;
+
+// Wall variables
+const int MAX_WALL_BLOCKS = 100;
+int wallX[MAX_WALL_BLOCKS];
+int wallY[MAX_WALL_BLOCKS];
+int wallCount = 0;
+
 
 bool InitSDL() {
 
@@ -58,6 +69,19 @@ bool InitSDL() {
     return false;
   }
 
+  // Initialize SDL_image for loading PNG images
+  if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+    cout << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << endl;
+    return false;
+  }
+  
+  // Load brick texture
+  brickTexture = IMG_LoadTexture(renderer, "assets/NewBricks.png");
+  if (!brickTexture) {
+    cout << "Failed to load brick texture: " << IMG_GetError() << endl;
+    return false;
+  }
+
   // Score font display 
   font = TTF_OpenFont("/System/Library/Fonts/Helvetica.ttc", 24);
   if (font == nullptr) {
@@ -68,6 +92,11 @@ bool InitSDL() {
 }
 
 void CloseSDL() {
+  if (brickTexture != nullptr) {
+    SDL_DestroyTexture(brickTexture);
+    brickTexture = nullptr;
+  }
+  
   if (font != nullptr) {
     TTF_CloseFont(font);
     font = nullptr;
@@ -83,20 +112,39 @@ void CloseSDL() {
     window = nullptr;
   }
   
+  IMG_Quit();
   TTF_Quit();
   SDL_Quit();
 }
+
 
 void Setup(){
   srand(time(0));
   gameOver = false;
   dir = STOP;
-  x = width / 2;
-  y = height / 2;
-  fruitX = rand() % width;
-  fruitY = rand() % height;
   score = 0;
   nTail = 0;
+  
+  // Create a vertical wall in the middle of the screen
+  WallGenerator(wallX, wallY, wallCount);
+
+  // Generate snake head position -- random position avoid walls
+  bool validPosition_snake = false;
+  while (!validPosition_snake) {
+    x = rand() % width;
+    y = rand() % height;
+    validPosition_snake = true;
+    for (int i = 0; i < wallCount; i++) {
+      if (x == wallX[i] && y == wallY[i]) {
+        validPosition_snake = false;
+        break;
+      }
+    }
+  }
+
+  // Generate fruit position -- random position avoid walls and snake head
+  FruitGenerator(x, y, wallX, wallY, wallCount);
+
 }
 
 // Draw a filled circle at the given center point with the given radius
@@ -122,6 +170,12 @@ void Draw(){
   SDL_Rect border = {0, 0, SCREEN_WIDTH, height * CELL_SIZE};
   SDL_RenderDrawRect(renderer, &border);
 
+  // Draw brick walls
+  for (int i = 0; i < wallCount; i++) {
+    SDL_Rect wallRect = {wallX[i] * CELL_SIZE, wallY[i] * CELL_SIZE, CELL_SIZE, CELL_SIZE};
+    SDL_RenderCopy(renderer, brickTexture, nullptr, &wallRect);
+  }
+
   // Draw snake head
   SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
   SDL_Rect head = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
@@ -134,7 +188,7 @@ void Draw(){
     SDL_RenderFillRect(renderer, &tail);
   }
 
-  // Draw fruit -- as a red circle, positioned from upper-left corner
+  // Draw fruit -- as a red circle, positioned randomly in the screen 
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   int fruitCenterX = fruitX * CELL_SIZE + CELL_SIZE / 2;
   int fruitCenterY = fruitY * CELL_SIZE + CELL_SIZE / 2;
@@ -225,21 +279,28 @@ void Logic(){
 
   if (x >= width || x < 0 || y >= height || y < 0)
     gameOver = true;
+  
+  // Check collision with snake tail
   for (int i = 0; i < nTail; i++){
     if (tailX[i] == x && tailY[i] == y)
       gameOver = true;
+  }
+  
+  // Check collision with walls
+  for (int i = 0; i < wallCount; i++) {
+    if (x == wallX[i] && y == wallY[i]) {
+      gameOver = true;
+      break;
+    }
   }
 
   if (x == fruitX && y == fruitY){
     score += 10;
     
-    // Generate new fruit position (avoid current position)
-    do {
-      fruitX = rand() % width;
-      fruitY = rand() % height;
-    } while (fruitX == x && fruitY == y); // Repeat if fruit spawns on snake head
-    
-    nTail++;
+  // Generate new fruit position -- avoid current position(snake head) and walls
+  FruitGenerator(x, y, wallX, wallY, wallCount);
+  
+  nTail++;
   }
 }
 
@@ -269,6 +330,7 @@ int ShowGameOverDialog(int finalScore) {
   
   return buttonid; // 0 = Quit, 1 = Restart
 }
+
 
 int main(){
   if (!InitSDL()) {
