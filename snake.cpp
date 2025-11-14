@@ -6,6 +6,8 @@
 #include <ctime>
 #include <SDL_image.h>
 
+#include "generators.h"
+
 using namespace std;
 
 // Game variables
@@ -33,6 +35,7 @@ const int MAX_WALL_BLOCKS = 100;
 int wallX[MAX_WALL_BLOCKS];
 int wallY[MAX_WALL_BLOCKS];
 int wallCount = 0;
+
 
 bool InitSDL() {
 
@@ -114,25 +117,34 @@ void CloseSDL() {
   SDL_Quit();
 }
 
+
 void Setup(){
   srand(time(0));
   gameOver = false;
   dir = STOP;
-  x = width / 3;  //set snake head at 1/3 of the screen width(next step: random position)
-  y = height / 3;
-  fruitX = rand() % width;
-  fruitY = rand() % height;
   score = 0;
   nTail = 0;
   
   // Create a vertical wall in the middle of the screen
-  wallCount = 0;
-  int middleX = width / 2;
-  for (int i = height / 4; i < height * 3 / 4; i++) {
-    wallX[wallCount] = middleX;
-    wallY[wallCount] = i;
-    wallCount++;
+  WallGenerator(wallX, wallY, wallCount);
+
+  // Generate snake head position -- random position avoid walls
+  bool validPosition_snake = false;
+  while (!validPosition_snake) {
+    x = rand() % width;
+    y = rand() % height;
+    validPosition_snake = true;
+    for (int i = 0; i < wallCount; i++) {
+      if (x == wallX[i] && y == wallY[i]) {
+        validPosition_snake = false;
+        break;
+      }
+    }
   }
+
+  // Generate fruit position -- random position avoid walls and snake head
+  FruitGenerator(x, y, wallX, wallY, wallCount);
+
 }
 
 // Draw a filled circle at the given center point with the given radius
@@ -176,7 +188,7 @@ void Draw(){
     SDL_RenderFillRect(renderer, &tail);
   }
 
-  // Draw fruit -- as a red circle, positioned randomly in the screen (next step:except the walls and the snake head)
+  // Draw fruit -- as a red circle, positioned randomly in the screen 
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   int fruitCenterX = fruitX * CELL_SIZE + CELL_SIZE / 2;
   int fruitCenterY = fruitY * CELL_SIZE + CELL_SIZE / 2;
@@ -285,29 +297,10 @@ void Logic(){
   if (x == fruitX && y == fruitY){
     score += 10;
     
-    // Generate new fruit position (avoid current position and walls)
-    bool validPosition = false;
-    while (!validPosition) {
-      fruitX = rand() % width;
-      fruitY = rand() % height;
-      validPosition = true;
-      
-      // Check if fruit spawns on snake head
-      if (fruitX == x && fruitY == y) {
-        validPosition = false;
-        continue;
-      }
-      
-      // Check if fruit spawns on wall
-      for (int i = 0; i < wallCount; i++) {
-        if (fruitX == wallX[i] && fruitY == wallY[i]) {
-          validPosition = false;
-          break;
-        }
-      }
-    }
-    
-    nTail++;
+  // Generate new fruit position -- avoid current position(snake head) and walls
+  FruitGenerator(x, y, wallX, wallY, wallCount);
+  
+  nTail++;
   }
 }
 
@@ -337,6 +330,7 @@ int ShowGameOverDialog(int finalScore) {
   
   return buttonid; // 0 = Quit, 1 = Restart
 }
+
 
 int main(){
   if (!InitSDL()) {
