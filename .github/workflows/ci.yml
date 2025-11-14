@@ -21,7 +21,7 @@ jobs:
     - name: Build game
       run: make snake  
     - name: Upload binary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: snake-macos
         path: snake
@@ -40,7 +40,7 @@ jobs:
     - name: Build game
       run: make snake
     - name: Upload binary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: snake-linux
         path: snake
