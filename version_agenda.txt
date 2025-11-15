@@ -1,0 +1,7 @@
+11/14 -- current ongoing: draft-brickwalls
+    next move on this branch
+        - collision for the snake head and the walls is not firmly calculated
+        - random wall generator
+    next new branch 
+        - draft-snakehead
+    pending error - for each refresh of the fruit a green block will show up in the upper left corner
