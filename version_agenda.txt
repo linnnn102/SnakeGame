@@ -1,0 +1,15 @@
+11/14 -- current ongoing: draft-brickwalls
+    next move on this branch
+        - collision for the snake head and the walls is not firmly calculated
+        - random wall generator
+    next new branch 
+        - draft-snakehead
+    pending error - for each refresh of the fruit a green block will show up in the upper left corner
+
+11/17 -- current ongoing: draft-snakehead
+    head/body seperation completed
+    collision detection updated
+    next move on draft-brickwalls 
+        - random wall generator
+    pending error - for each refresh of the fruit a green block will show up in the upper left corner
+    pending work - reorganize code structure

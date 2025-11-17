@@ -29,6 +29,8 @@ SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 TTF_Font* font = nullptr;
 SDL_Texture* brickTexture = nullptr;
+SDL_Texture* snakeHeadTexture = nullptr;
+SDL_Texture* snakeHeadTextureD = nullptr;
 
 // Wall variables
 const int MAX_WALL_BLOCKS = 100;
@@ -82,6 +84,19 @@ bool InitSDL() {
     return false;
   }
 
+  // Load snake head texture
+  snakeHeadTexture = IMG_LoadTexture(renderer, "assets/SnakeHead.png");
+  if (!snakeHeadTexture) {
+    cout << "Failed to load snake head texture: " << IMG_GetError() << endl;
+    return false;
+  }
+
+  snakeHeadTextureD = IMG_LoadTexture(renderer, "assets/SnakeHead_D.png");
+  if (!snakeHeadTextureD) {
+    cout << "Failed to load snake head texture: " << IMG_GetError() << endl;
+    return false;
+  }
+
   // Score font display 
   font = TTF_OpenFont("/System/Library/Fonts/Helvetica.ttc", 24);
   if (font == nullptr) {
@@ -95,6 +110,16 @@ void CloseSDL() {
   if (brickTexture != nullptr) {
     SDL_DestroyTexture(brickTexture);
     brickTexture = nullptr;
+  }
+  
+  if (snakeHeadTexture != nullptr) {
+    SDL_DestroyTexture(snakeHeadTexture);
+    snakeHeadTexture = nullptr;
+  }
+  
+  if (snakeHeadTextureD != nullptr) {
+    SDL_DestroyTexture(snakeHeadTextureD);
+    snakeHeadTextureD = nullptr;
   }
   
   if (font != nullptr) {
@@ -176,16 +201,11 @@ void Draw(){
     SDL_RenderCopy(renderer, brickTexture, nullptr, &wallRect);
   }
 
-  // Draw snake head
-  SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-  SDL_Rect head = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
-  SDL_RenderFillRect(renderer, &head);
-
-  // Draw snake tail
-  SDL_SetRenderDrawColor(renderer, 0, 200, 0, 255);
+  // Draw snake body/tail as green squares
+  SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);  // Green for body
   for (int i = 0; i < nTail; i++) {
     SDL_Rect tail = {tailX[i] * CELL_SIZE, tailY[i] * CELL_SIZE, CELL_SIZE, CELL_SIZE};
-    SDL_RenderFillRect(renderer, &tail);
+    SDL_RenderFillRect(renderer, &tail);  // Solid green square
   }
 
   // Draw fruit -- as a red circle, positioned randomly in the screen 
@@ -209,6 +229,16 @@ void Draw(){
       }
       SDL_FreeSurface(textSurface);
     }
+  }
+
+  // Draw snake head LAST (on top of everything)
+  SDL_Rect head = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
+  if (gameOver) {
+    // Use dead/hurt texture when game is over
+    SDL_RenderCopy(renderer, snakeHeadTextureD, nullptr, &head);
+  } else {
+    // Use normal texture during gameplay
+    SDL_RenderCopy(renderer, snakeHeadTexture, nullptr, &head);
   }
 
   // Update screen
@@ -260,39 +290,54 @@ void Logic(){
     prevY = prev2Y;
   }
 
+  // Calculate next position based on direction
+  int nextX = x;
+  int nextY = y;
+  
   switch(dir){
     case LEFT:
-      x--;
+      nextX--;
       break;
     case RIGHT:
-      x++;
+      nextX++;
       break;
     case UP:
-      y--;
+      nextY--;
       break;
     case DOWN:
-      y++;
+      nextY++;
       break;
     default:
       break;
   }
 
-  if (x >= width || x < 0 || y >= height || y < 0)
+  // Check collision BEFORE moving to next position
+  
+  // Check if next position hits boundary walls
+  if (nextX >= width || nextX < 0 || nextY >= height || nextY < 0) {
     gameOver = true;
+    return;  // Don't move if collision detected
+  }
   
   // Check collision with snake tail
   for (int i = 0; i < nTail; i++){
-    if (tailX[i] == x && tailY[i] == y)
+    if (tailX[i] == nextX && tailY[i] == nextY){
       gameOver = true;
-  }
-  
-  // Check collision with walls
-  for (int i = 0; i < wallCount; i++) {
-    if (x == wallX[i] && y == wallY[i]) {
-      gameOver = true;
-      break;
+      return;  // Don't move if collision detected
     }
   }
+  
+  // Check collision with brick walls
+  for (int i = 0; i < wallCount; i++) {
+    if (wallX[i] == nextX && wallY[i] == nextY) {
+      gameOver = true;
+      return;  // Don't move if collision detected
+    }
+  }
+
+  // No collision detected, safe to move
+  x = nextX;
+  y = nextY;
 
   if (x == fruitX && y == fruitY){
     score += 10;
@@ -372,6 +417,10 @@ int main(){
 
     // Show game over dialog with Restart/Quit options
     if (gameOver) {
+      // Draw one final frame with dead texture
+      Draw();
+      SDL_Delay(500); // Pause for half second to show dead texture
+      
       int choice = ShowGameOverDialog(score);
       if (choice == 0) {
         quit = true; // User chose Quit
