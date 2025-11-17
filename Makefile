@@ -15,7 +15,7 @@ else
 endif
 
 TARGET = snake
-SRC = snake.cpp generators.cpp
+SRC = src/snake.cpp src/generators.cpp
 
 # Default target
 all: $(TARGET)
