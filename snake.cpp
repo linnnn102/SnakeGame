@@ -201,20 +201,11 @@ void Draw(){
     SDL_RenderCopy(renderer, brickTexture, nullptr, &wallRect);
   }
 
-  // Draw snake head (change texture if game over)
-  SDL_Rect head = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
-  if (gameOver) {
-    // Use dead/hurt texture when game is over
-    SDL_RenderCopy(renderer, snakeHeadTextureD, nullptr, &head);
-  } else {
-    // Use normal texture during gameplay
-    SDL_RenderCopy(renderer, snakeHeadTexture, nullptr, &head);
-  }
-
-  // Draw snake tail
+  // Draw snake body/tail as green squares
+  SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);  // Green for body
   for (int i = 0; i < nTail; i++) {
     SDL_Rect tail = {tailX[i] * CELL_SIZE, tailY[i] * CELL_SIZE, CELL_SIZE, CELL_SIZE};
-    SDL_RenderCopy(renderer, snakeHeadTexture, nullptr, &tail);
+    SDL_RenderFillRect(renderer, &tail);  // Solid green square
   }
 
   // Draw fruit -- as a red circle, positioned randomly in the screen 
@@ -238,6 +229,16 @@ void Draw(){
       }
       SDL_FreeSurface(textSurface);
     }
+  }
+
+  // Draw snake head LAST (on top of everything)
+  SDL_Rect head = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
+  if (gameOver) {
+    // Use dead/hurt texture when game is over
+    SDL_RenderCopy(renderer, snakeHeadTextureD, nullptr, &head);
+  } else {
+    // Use normal texture during gameplay
+    SDL_RenderCopy(renderer, snakeHeadTexture, nullptr, &head);
   }
 
   // Update screen
@@ -289,39 +290,54 @@ void Logic(){
     prevY = prev2Y;
   }
 
+  // Calculate next position based on direction
+  int nextX = x;
+  int nextY = y;
+  
   switch(dir){
     case LEFT:
-      x--;
+      nextX--;
       break;
     case RIGHT:
-      x++;
+      nextX++;
       break;
     case UP:
-      y--;
+      nextY--;
       break;
     case DOWN:
-      y++;
+      nextY++;
       break;
     default:
       break;
   }
 
-  if (x >= width || x < 0 || y >= height || y < 0)
+  // Check collision BEFORE moving to next position
+  
+  // Check if next position hits boundary walls
+  if (nextX >= width || nextX < 0 || nextY >= height || nextY < 0) {
     gameOver = true;
+    return;  // Don't move if collision detected
+  }
   
   // Check collision with snake tail
   for (int i = 0; i < nTail; i++){
-    if (tailX[i] == x && tailY[i] == y){
+    if (tailX[i] == nextX && tailY[i] == nextY){
       gameOver = true;
+      return;  // Don't move if collision detected
     }
   }
   
-  // Check collision with walls
+  // Check collision with brick walls
   for (int i = 0; i < wallCount; i++) {
-    if (wallX[i] == x && wallY[i] == y) {
+    if (wallX[i] == nextX && wallY[i] == nextY) {
       gameOver = true;
+      return;  // Don't move if collision detected
     }
   }
+
+  // No collision detected, safe to move
+  x = nextX;
+  y = nextY;
 
   if (x == fruitX && y == fruitY){
     score += 10;
