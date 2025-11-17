@@ -17,4 +17,6 @@
         - reorganize code structure
         - the body size looks a lil bit larger than the head
         - level system
+        - two modes
         - window resize
+        - linux/windows/mobile version
