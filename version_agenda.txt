@@ -4,12 +4,17 @@
         - random wall generator
     next new branch 
         - draft-snakehead
-    pending error - for each refresh of the fruit a green block will show up in the upper left corner
+    pending error 
+        - for each refresh of the fruit a green block will show up in the upper left corner
 
-11/17 -- current ongoing: draft-snakehead
+11/17 -- current ongoing: draft-snakehead/ draft-wallgenerator
     head/body seperation completed
     collision detection updated
-    next move on draft-brickwalls 
-        - random wall generator
-    pending error - for each refresh of the fruit a green block will show up in the upper left corner
-    pending work - reorganize code structure
+    wall generator updated
+    pending error 
+        - for each refresh of the fruit a green block will show up in the upper left corner
+    pending work 
+        - reorganize code structure
+        - the body size looks a lil bit larger than the head
+        - level system
+        - window resize
