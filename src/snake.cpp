@@ -31,6 +31,7 @@ TTF_Font* font = nullptr;
 SDL_Texture* brickTexture = nullptr;
 SDL_Texture* snakeHeadTexture = nullptr;
 SDL_Texture* snakeHeadTextureD = nullptr;
+SDL_Texture* snakeBodyTexture = nullptr;
 
 // Wall variables
 const int MAX_WALL_BLOCKS = 100;
@@ -97,6 +98,13 @@ bool InitSDL() {
     return false;
   }
 
+  // Load snake body texture
+  snakeBodyTexture = IMG_LoadTexture(renderer, "assets/SnakeBody.png");
+  if (!snakeBodyTexture) {
+    cout << "Failed to load snake body texture: " << IMG_GetError() << endl;
+    return false;
+  }
+
   // Score font display 
   font = TTF_OpenFont("/System/Library/Fonts/Helvetica.ttc", 24);
   if (font == nullptr) {
@@ -122,6 +130,11 @@ void CloseSDL() {
     snakeHeadTextureD = nullptr;
   }
   
+  if (snakeBodyTexture != nullptr) {
+    SDL_DestroyTexture(snakeBodyTexture);
+    snakeBodyTexture = nullptr;
+  }
+
   if (font != nullptr) {
     TTF_CloseFont(font);
     font = nullptr;
@@ -201,12 +214,12 @@ void Draw(){
     SDL_RenderCopy(renderer, brickTexture, nullptr, &wallRect);
   }
 
-  // Draw snake body/tail as green squares
-  SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);  // Green for body
+  // Draw snake body/tail
   for (int i = 0; i < nTail; i++) {
-    SDL_Rect tail = {tailX[i] * CELL_SIZE, tailY[i] * CELL_SIZE, CELL_SIZE, CELL_SIZE};
-    SDL_RenderFillRect(renderer, &tail);  // Solid green square
+    SDL_Rect tailRect = {tailX[i] * CELL_SIZE, tailY[i] * CELL_SIZE, CELL_SIZE, CELL_SIZE};
+    SDL_RenderCopy(renderer, snakeBodyTexture, nullptr, &tailRect);
   }
+  
 
   // Draw fruit -- as a red circle, positioned randomly in the screen 
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);

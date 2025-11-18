@@ -30,8 +30,8 @@ void FruitGenerator(int x, int y, int wallX[], int wallY[], int wallCount) {
 void WallGenerator(int wallX[], int wallY[], int& wallCount) {
   wallCount = 0;
 
-  // Create 2-4 random walls
-  int numWalls = 2 + rand() % 3;
+  // 3 Walls max
+  int numWalls = 3;
 
   for (int w = 0; w < numWalls; w++) {
 
@@ -41,9 +41,10 @@ void WallGenerator(int wallX[], int wallY[], int& wallCount) {
     // Wall length: 2-5
     int wallLength = 2 + rand() % 4;
 
-    if (wallCount + wallLength > MAX_WALL_BLOCKS) {
-      break;
-    }
+    // if (wallCount + wallLength > MAX_WALL_BLOCKS) {
+    //   break;
+    // }
+    
     if (direction == 0) {
       // VERTICAL WALL
       int wallX_pos = 2 + rand() % (width - 4);
