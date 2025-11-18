@@ -12,6 +12,7 @@ using namespace std;
 
 // Game variables
 bool gameOver;
+bool isPaused = false;
 const int width = 20;
 const int height = 20;
 int x, y, fruitX, fruitY, score;
@@ -220,7 +221,6 @@ void Draw(){
     SDL_RenderCopy(renderer, snakeBodyTexture, nullptr, &tailRect);
   }
   
-
   // Draw fruit -- as a red circle, positioned randomly in the screen 
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   int fruitCenterX = fruitX * CELL_SIZE + CELL_SIZE / 2;
@@ -242,6 +242,14 @@ void Draw(){
       }
       SDL_FreeSurface(textSurface);
     }
+
+    // Draw pause button
+    SDL_Rect pauseButton = {SCREEN_WIDTH - 90, 10, 80, 30};
+    if (!isPaused) {
+      SDL_RenderCopy(renderer, pauseButtonTexture, nullptr, &pauseButton);
+    } else {
+      SDL_RenderCopy(renderer, pauseButtonTextureD, nullptr, &pauseButton);
+    }
   }
 
   // Draw snake head LAST (on top of everything)
@@ -259,6 +267,7 @@ void Draw(){
 }
 
 void Input(SDL_Event& e){
+  // Keyboard input handling
   if (e.type == SDL_KEYDOWN) {
     switch (e.key.keysym.sym) {
       case SDLK_a:
@@ -282,8 +291,22 @@ void Input(SDL_Event& e){
         gameOver = true;
         break;
       case SDLK_SPACE:
-        if (dir == STOP) dir = RIGHT; // Start the game
+        isPaused = !isPaused;
         break;
+    }
+  }
+
+  // Mouse clicks handling
+  if (e.type == SDL_MOUSEBUTTONDOWN) {
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+
+    // Pause button -- top right corner, 80x30 pixels
+    SDL_Rect pauseButton = {SCREEN_WIDTH - 90, 10, 80, 30};
+
+    if (mouseX >= pauseButton.x && mouseX <= pauseButton.x + pauseButton.w &&
+        mouseY >= pauseButton.y && mouseY <= pauseButton.y + pauseButton.h) {
+      isPaused = !isPaused;
     }
   }
 }
@@ -387,6 +410,30 @@ int ShowGameOverDialog(int finalScore) {
   return buttonid; // 0 = Quit, 1 = Restart
 }
 
+void ShowPauseDialog() {
+  const SDL_MessageBoxButtonData buttons[] = {
+    { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "Resume" }
+    { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "Quit" }
+  };
+  
+  string message = "Game Paused\n\nWould you like to resume or quit?";
+  
+  const SDL_MessageBoxData messageboxdata = {
+    SDL_MESSAGEBOX_INFORMATION,
+    window,
+    "Game Paused",
+    message.c_str(),
+    SDL_arraysize(buttons),
+    buttons,
+    nullptr
+  };
+  
+  int buttonid;
+  SDL_ShowMessageBox(&messageboxdata, &buttonid);
+
+  //Resume game 
+  isPaused = false;
+}
 
 int main(){
   if (!InitSDL()) {
