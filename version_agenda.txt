@@ -20,3 +20,15 @@
         - two modes
         - window resize
         - linux/windows/mobile version
+
+11/18 -- current ongoing: draft-refreshdebug
+    wall generator updated
+    body size is now aligned with head size
+    next move on this branch
+        - solve the refresh bug 
+    pending work:
+        - reorganize code structure
+        - level system
+        - two modes
+        - window resize
+        - linux/windows/mobile version
