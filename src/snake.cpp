@@ -289,20 +289,6 @@ void Input(SDL_Event& e){
 }
 
 void Logic(){
-  int prevX = tailX[0];
-  int prevY = tailY[0];
-  int prev2X, prev2Y;
-  tailX[0] = x;
-  tailY[0] = y;
-  for (int i = 1; i < nTail; i++){
-    prev2X = tailX[i];
-    prev2Y = tailY[i];
-    tailX[i] = prevX;
-    tailY[i] = prevY;
-    prevX = prev2X;
-    prevY = prev2Y;
-  }
-
   // Calculate next position based on direction
   int nextX = x;
   int nextY = y;
@@ -354,11 +340,23 @@ void Logic(){
 
   if (x == fruitX && y == fruitY){
     score += 10;
-    
-  // Generate new fruit position -- avoid current position(snake head) and walls
-  FruitGenerator(x, y, wallX, wallY, wallCount);
-  
-  nTail++;
+    FruitGenerator(x, y, wallX, wallY, wallCount);
+    nTail++;
+  }
+
+  // Update tail position
+  int prevX = tailX[0];
+  int prevY = tailY[0];
+  tailX[0] = x;
+  tailY[0] = y;
+  int prev2X, prev2Y;
+  for (int i = 1; i < nTail; i++){
+    prev2X = tailX[i];
+    prev2Y = tailY[i];
+    tailX[i] = prevX;
+    tailY[i] = prevY;
+    prevX = prev2X;
+    prevY = prev2Y;
   }
 }
 
