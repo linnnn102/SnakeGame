@@ -274,7 +274,7 @@ void Draw(){
   }
 
   // Draw pause button
-  SDL_Rect pauseButton = {SCREEN_WIDTH - 90, 10, 80, 30};
+  SDL_Rect pauseButton = {SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 80, 30};
   // if (!isPaused) {
   //   SDL_RenderCopy(renderer, pauseButtonTexture, nullptr, &pauseButton);
   // } else {

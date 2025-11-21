@@ -46,3 +46,17 @@
         - two modes
         - window resize
         - linux/windows/mobile version
+
+11/21 -- current ongoing: draft-pausenquit
+    change the pause button location to solve the overlap problem
+    bug detected while testing:
+        - reproduce: 
+            start the game with ./snake --> press space to pause --> press esc to quit pause --> Game over popup
+    next new branch 
+        - draft-windowresize
+    pending work:
+        - reorganize code structure
+        - level system
+        - two modes
+        - window resize
+        - linux/windows/mobile version
