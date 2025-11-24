@@ -12,6 +12,7 @@ using namespace std;
 
 // Game variables
 bool gameOver;
+bool isPaused = false;
 const int width = 20;
 const int height = 20;
 int x, y, fruitX, fruitY, score;
@@ -114,6 +115,7 @@ bool InitSDL() {
   return true;
 }
 
+
 void CloseSDL() {
   if (brickTexture != nullptr) {
     SDL_DestroyTexture(brickTexture);
@@ -185,6 +187,7 @@ void Setup(){
 
 }
 
+
 // Draw a filled circle at the given center point with the given radius
 void DrawFilledCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
   for (int w = 0; w < radius * 2; w++) {
@@ -197,6 +200,33 @@ void DrawFilledCircle(SDL_Renderer* renderer, int centerX, int centerY, int radi
     }
   }
 }
+
+
+void ShowPauseDialog() {
+  const SDL_MessageBoxButtonData buttons[] = {
+    { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "Resume" },
+    { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "Quit" }
+  };
+  
+  string message = "Game Paused\n\nWould you like to resume or quit?";
+  
+  const SDL_MessageBoxData messageboxdata = {
+    SDL_MESSAGEBOX_INFORMATION,
+    window,
+    "Game Paused",
+    message.c_str(),
+    SDL_arraysize(buttons),
+    buttons,
+    nullptr
+  };
+  
+  int buttonid;
+  SDL_ShowMessageBox(&messageboxdata, &buttonid);
+
+  //Resume game  
+  isPaused = false;
+}
+
 
 void Draw(){
   // Clear screen with black background
@@ -220,7 +250,6 @@ void Draw(){
     SDL_RenderCopy(renderer, snakeBodyTexture, nullptr, &tailRect);
   }
   
-
   // Draw fruit -- as a red circle, positioned randomly in the screen 
   SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
   int fruitCenterX = fruitX * CELL_SIZE + CELL_SIZE / 2;
@@ -244,6 +273,57 @@ void Draw(){
     }
   }
 
+  // Draw pause button
+  SDL_Rect pauseButton = {SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 80, 30};
+  // if (!isPaused) {
+  //   SDL_RenderCopy(renderer, pauseButtonTexture, nullptr, &pauseButton);
+  // } else {
+  //   SDL_RenderCopy(renderer, pauseButtonTextureD, nullptr, &pauseButton);
+  // }
+  if (isPaused) {
+    SDL_SetRenderDrawColor(renderer, 100, 100, 255, 255);  // Blue when paused
+  } else {
+    SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);  // Gray when playing
+  }
+  SDL_RenderFillRect(renderer, &pauseButton);
+
+  // Pause button border
+  SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+  SDL_RenderDrawRect(renderer, &pauseButton);
+    
+  // Pause button text
+  if (font != nullptr) {
+    string pauseText = isPaused ? "Paused" : "Pause";
+    SDL_Color white = {255, 255, 255, 255};
+    SDL_Surface* textSurface = TTF_RenderText_Solid(font, pauseText.c_str(), white);
+    if (textSurface != nullptr) {
+      SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+      if (textTexture != nullptr) {
+        SDL_Rect textRect = {
+          pauseButton.x + (pauseButton.w - textSurface->w) / 2,
+          pauseButton.y + (pauseButton.h - textSurface->h) / 2,
+          textSurface->w,
+          textSurface->h
+        };
+        SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+        SDL_DestroyTexture(textTexture);
+      }
+      SDL_FreeSurface(textSurface);
+    }
+  }
+
+  // Draw pause overlay if paused
+  if (isPaused) {
+    // Semi-transparent overlay
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);  // Black with 50% transparency
+    SDL_Rect overlay = {0, 0, SCREEN_WIDTH, height * CELL_SIZE};
+    SDL_RenderFillRect(renderer, &overlay);
+    ShowPauseDialog();
+    SDL_RenderPresent(renderer);
+    return;
+  }
+
   // Draw snake head LAST (on top of everything)
   SDL_Rect head = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
   if (gameOver) {
@@ -258,7 +338,9 @@ void Draw(){
   SDL_RenderPresent(renderer);
 }
 
+
 void Input(SDL_Event& e){
+  // Keyboard input handling
   if (e.type == SDL_KEYDOWN) {
     switch (e.key.keysym.sym) {
       case SDLK_a:
@@ -277,21 +359,37 @@ void Input(SDL_Event& e){
       case SDLK_DOWN:
         if (dir != UP) dir = DOWN;
         break;
-      case SDLK_x:
       case SDLK_ESCAPE:
         gameOver = true;
         break;
       case SDLK_SPACE:
-        if (dir == STOP) dir = RIGHT; // Start the game
+        isPaused = !isPaused;
         break;
     }
   }
+
+  // Mouse clicks handling
+  if (e.type == SDL_MOUSEBUTTONDOWN) {
+    int mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+
+    // Pause button -- top right corner, 80x30 pixels
+    SDL_Rect pauseButton = {SCREEN_WIDTH - 90, 10, 80, 30};
+
+    if (mouseX >= pauseButton.x && mouseX <= pauseButton.x + pauseButton.w &&
+        mouseY >= pauseButton.y && mouseY <= pauseButton.y + pauseButton.h) {
+      isPaused = !isPaused;
+    }
+  }
 }
+
 
 void Logic(){
   // Calculate next position based on direction
   int nextX = x;
   int nextY = y;
+  int curX = x;
+  int curY = y;
   
   switch(dir){
     case LEFT:
@@ -333,32 +431,26 @@ void Logic(){
       return;  // Don't move if collision detected
     }
   }
-
-  // No collision detected, safe to move
-  x = nextX;
-  y = nextY;
-
-  if (x == fruitX && y == fruitY){
+  
+  // No collision detected, safe to move, check if the new position is the fruit
+  if (nextX == fruitX && nextY == fruitY){
     score += 10;
-    FruitGenerator(x, y, wallX, wallY, wallCount);
+    FruitGenerator(nextX, nextY, wallX, wallY, wallCount);
     nTail++;
   }
 
-  // Update tail position
-  int prevX = tailX[0];
-  int prevY = tailY[0];
-  tailX[0] = x;
-  tailY[0] = y;
-  int prev2X, prev2Y;
-  for (int i = 1; i < nTail; i++){
-    prev2X = tailX[i];
-    prev2Y = tailY[i];
-    tailX[i] = prevX;
-    tailY[i] = prevY;
-    prevX = prev2X;
-    prevY = prev2Y;
+  x = nextX;
+  y = nextY;
+
+  // Update tail positions
+  for (int i = nTail - 1; i > 0; i--){
+    tailX[i] = tailX[i - 1]; 
+    tailY[i] = tailY[i - 1];
   }
+  tailX[0] = curX;
+  tailY[0] = curY;
 }
+
 
 int ShowGameOverDialog(int finalScore) {
   const SDL_MessageBoxButtonData buttons[] = {

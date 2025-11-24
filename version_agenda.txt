@@ -4,14 +4,14 @@
         - random wall generator
     next new branch 
         - draft-snakehead
-    pending error 
+    pending bug 
         - for each refresh of the fruit a green block will show up in the upper left corner
 
 11/17 -- current ongoing: draft-snakehead/ draft-wallgenerator
     head/body seperation completed
     collision detection updated
     wall generator updated
-    pending error 
+    pending bug 
         - for each refresh of the fruit a green block will show up in the upper left corner
     pending work 
         - reorganize code structure
@@ -25,6 +25,45 @@
     wall generator updated
     body size is now aligned with head size
     the refresh bug solved
+    pending work:
+        - reorganize code structure
+        - level system
+        - two modes
+        - window resize
+        - linux/windows/mobile version
+        - pause button
+
+11/19 -- current ongoing: draft-refreshdebug
+    bug solved - the first fruit eaten can be calculated as 10 score but not in the length of the snake
+    current bug on this branch:
+        - the pause button will cover the body when snake pass underneath
+        - a prettier pause button
+    next new branch 
+        - draft-windowresize
+    pending work:
+        - reorganize code structure
+        - level system
+        - two modes
+        - window resize
+        - linux/windows/mobile version
+
+11/21 -- current ongoing: draft-pausenquit
+    change the pause button location to solve the overlap problem
+    bug detected while testing:
+        - reproduce: 
+            start the game with ./snake --> press space to pause --> press esc to quit pause --> Game over popup
+    next new branch 
+        - draft-windowresize
+    pending work:
+        - reorganize code structure
+        - level system
+        - two modes
+        - window resize
+        - linux/windows/mobile version
+
+11/24 -- current ongoing: draft-windowresize
+    bug resolved --> keep the current flow
+    window can be resize and scale properly now
     pending work:
         - reorganize code structure
         - level system

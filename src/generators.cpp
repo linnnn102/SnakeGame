@@ -41,7 +41,7 @@ void WallGenerator(int wallX[], int wallY[], int& wallCount) {
     // Wall length: 2-5
     int wallLength = 2 + rand() % 4;
 
-    // if (wallCount + wallLength > MAX_WALL_BLOCKS) {
+    // if (wallCount + wallLength > MAX_WALL_BLOCKS) { --> wall blocks number has a limitation but will keep this for future use
     //   break;
     // }
     
