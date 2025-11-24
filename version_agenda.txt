@@ -60,3 +60,13 @@
         - two modes
         - window resize
         - linux/windows/mobile version
+
+11/24 -- current ongoing: draft-windowresize
+    bug resolved --> keep the current flow
+    window can be resize and scale properly now
+    pending work:
+        - reorganize code structure
+        - level system
+        - two modes
+        - window resize
+        - linux/windows/mobile version

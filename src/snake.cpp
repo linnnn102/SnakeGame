@@ -359,7 +359,6 @@ void Input(SDL_Event& e){
       case SDLK_DOWN:
         if (dir != UP) dir = DOWN;
         break;
-      case SDLK_x:
       case SDLK_ESCAPE:
         gameOver = true;
         break;
