@@ -61,7 +61,7 @@ bool InitSDL() {
                             SDL_WINDOWPOS_CENTERED, 
                             SCREEN_WIDTH, 
                             SCREEN_HEIGHT, 
-                            SDL_WINDOW_SHOWN);
+                            SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
   if (window == nullptr) {
     cout << "Window could not be created! SDL_Error: " << SDL_GetError() << endl;
     return false;
@@ -72,6 +72,9 @@ bool InitSDL() {
     cout << "Renderer could not be created! SDL_Error: " << SDL_GetError() << endl;
     return false;
   }
+
+  SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT); // Set logical size to the window size
+  SDL_RenderSetIntegerScale(renderer, SDL_FALSE);  // Set integer scale to false to keep aspect ratio
 
   // Initialize SDL_image for loading PNG images
   if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
